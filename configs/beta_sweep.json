@@ -1,0 +1,13 @@
+{
+  "n_samples": 2000,
+  "obs_dim": 50,
+  "data_seed": 42,
+  "test_ratio": 0.2,
+  "hidden_dim": 128,
+  "lr": 0.001,
+  "n_epochs": 4000,
+  "betas": [0.25, 0.5, 1.0, 2.0, 4.0],
+  "seeds": [0, 1, 2],
+  "ph_subsample": 400,
+  "ph_loop_threshold": 0.2
+}

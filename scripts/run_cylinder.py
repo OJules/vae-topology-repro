@@ -77,7 +77,8 @@ def main():
             "h1_top1", "h1_top2", "n_loops", "bottleneck_to_truth"]
     summary = df.groupby("model", sort=False)[[c for c in cols if c in df]].agg(["mean", "std"])
     summary.to_csv(os.path.join(out, "summary.csv"))
-    with pd.option_context("display.width", 200, "display.precision", 3):
+    with pd.option_context("display.width", 250, "display.max_columns", None,
+                           "display.precision", 3):
         print("\n", summary)
     print(f"\nResults written to {out}")
 

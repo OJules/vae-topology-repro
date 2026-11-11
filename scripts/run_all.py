@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-EXPERIMENTS = ["run_cylinder.py"]
+EXPERIMENTS = ["run_cylinder.py", "run_beta_sweep.py"]
 
 for script in EXPERIMENTS:
     print(f"\n##### {script} #####", flush=True)
