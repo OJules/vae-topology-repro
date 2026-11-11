@@ -61,9 +61,24 @@ results/                  metrics and figures
 
 Seeds vary model initialisation only; data and split are fixed (as in the paper).
 
-## Results
+## Results (paper settings, 3 seeds, mean ± std)
 
-See `results/cylinder/summary.csv` and the figures `fig_latent.png`, `fig_h1_diagrams.png`.
+| Model | Test RMS ↓ | KL | Geodesic stress ↓ | Longest H₁ bar | Bottleneck to truth ↓ |
+|---|---|---|---|---|---|
+| True cylinder (reference) | – | – | – | 1.13 | 0 |
+| Observations in R⁵⁰ | – | – | – | 0.73 | 0.27 |
+| Gaussian VAE (R²) | 0.194 ± 0.002 | 3.14 ± 0.04 | 0.323 ± 0.004 | 0.30 ± 0.04 | 0.566 ± 0.000 |
+| Cylinder VAE (S¹ × [0,1]) | **0.185 ± 0.006** | 3.22 ± 0.04 | **0.161 ± 0.125** | **1.12 ± 0.03** | **0.057 ± 0.009** |
+
+What we observe:
+
+1. **Reproduced:** at a comparable KL, the cylinder VAE reconstructs slightly better and halves the geodesic stress on average, as the paper claims.
+2. **Topology:** the cylinder VAE's latent codes carry one long H₁ bar of the same length as the true cylinder (bottleneck 0.06). The Gaussian VAE's longest bar is about four times shorter: the latent scatter shows the circle torn into a spiral, so the loop never closes.
+3. **The Gaussian bottleneck is exactly 0.566 for every seed.** This is half the true bar's length: the true loop is matched to the diagonal, i.e. the Gaussian latent has no loop worth matching. It is a ceiling, not a coincidence.
+4. **One cylinder seed (seed 2) has a high geodesic stress (0.305) while its H₁ is still correct.** Persistent homology and geodesic stress measure different things: the loop exists, but distances along it are distorted. To investigate next.
+5. **`n_loops` does not separate the models** (1 for both): the 0.2 threshold is too low, since the Gaussian's torn ring still produces a 0.3 bar. The bar length and bottleneck distance are the informative metrics.
+
+Figures: `results/cylinder/fig_latent.png`, `results/cylinder/fig_h1_diagrams.png` (seed 0).
 
 ## Caveats
 
