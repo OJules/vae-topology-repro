@@ -1,0 +1,368 @@
+<title>VAE Topology Research Problem</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column, like a printed research note; figures and the
+   question box sit in the column, set off only by a thin frame. */
+:root {
+  --bg: #fbfcfd;
+  --surface: #f1f5f8;
+  --fg: #16212b;
+  --muted: #5a6774;
+  --rule: #d6dee5;
+  --accent: #1d6b86;
+  --accent-soft: rgba(29, 107, 134, 0.10);
+  --warn: #b5523b;
+  --font-display: "Spectral", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11171d; --surface: #18212a; --fg: #e3e9ee; --muted: #9aa8b4;
+    --rule: #2b3742; --accent: #5fb4d2; --accent-soft: rgba(95, 180, 210, 0.14);
+    --warn: #e08a72; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11171d; --surface: #18212a; --fg: #e3e9ee; --muted: #9aa8b4;
+  --rule: #2b3742; --accent: #5fb4d2; --accent-soft: rgba(95, 180, 210, 0.14);
+  --warn: #e08a72; color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 48px 72px;
+}
+main { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.25; }
+h1 { font-size: 2.1rem; }
+h2 { font-size: 1.5rem; padding-top: 6px; border-top: 1px solid var(--rule); padding-top: 20px; }
+h3 { font-size: 1.12rem; color: var(--accent); }
+p { margin: 0; }
+em { font-style: italic; }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.eyebrow { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.subtitle { font-family: var(--font-display); font-style: italic; font-size: 1.15rem; color: var(--muted); }
+.byline { font-size: 0.85rem; color: var(--muted); }
+header { display: flex; flex-direction: column; gap: 10px; }
+
+.question {
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 20px 22px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
+
+.formula {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 14px 16px;
+  text-align: center;
+  overflow-x: auto;
+}
+.formula .note { display: block; font-family: var(--font-body); font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
+.math { font-family: var(--font-display); font-style: italic; }
+.mono { font-family: var(--font-mono); font-size: 0.92em; }
+
+figure { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.fig-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fig-panel { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 0; }
+.fig-panel svg { width: 100%; max-width: 300px; height: auto; }
+.fig-label { font-size: 0.9rem; font-weight: 600; text-align: center; }
+.fig-label span { display: block; font-weight: 400; color: var(--muted); font-size: 0.82rem; }
+figcaption { font-size: 0.86rem; color: var(--muted); }
+figcaption b { color: var(--fg); font-weight: 600; }
+
+svg text { fill: var(--muted); font-family: var(--font-body); font-size: 11px; }
+svg .axis { stroke: var(--muted); stroke-width: 1; fill: none; }
+svg .grid { stroke: var(--rule); stroke-width: 1; fill: none; }
+svg .edge { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+svg .fillzone { fill: var(--accent-soft); stroke: none; }
+svg .dot { fill: var(--fg); }
+svg .dot-accent { fill: var(--accent); }
+svg .gap-mark { stroke: var(--warn); stroke-width: 1.4; fill: none; stroke-dasharray: 3 3; }
+svg .gap-text { fill: var(--warn); }
+
+ol, ul { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.two-col > div { padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.two-col > div + div { border-left: 1px solid var(--rule); }
+.two-col .head { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
+.two-col .used .head { color: var(--accent); }
+.two-col .notused .head { color: var(--muted); }
+.two-col p { font-size: 0.93rem; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 600; color: var(--muted); font-size: 0.8rem; }
+tr.ref td { color: var(--muted); }
+td.good { color: var(--accent); font-weight: 600; }
+
+.bars { display: flex; flex-direction: column; gap: 8px; }
+.bar-row { display: grid; grid-template-columns: 150px 1fr 48px; gap: 10px; align-items: center; font-size: 0.88rem; }
+.bar-track { height: 12px; background: var(--surface); border-radius: 2px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--accent); }
+.bar-fill.ref { background: var(--muted); }
+.bar-fill.bad { background: var(--warn); }
+.bar-row .val { font-family: var(--font-mono); font-size: 0.85rem; text-align: right; font-variant-numeric: tabular-nums; }
+
+.refs { font-size: 0.85rem; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+
+@media (max-width: 560px) {
+  h1 { font-size: 1.7rem; }
+  .fig-row, .two-col { grid-template-columns: 1fr; }
+  .two-col > div + div { border-left: none; border-top: 1px solid var(--rule); }
+  .bar-row { grid-template-columns: 110px 1fr 44px; }
+}
+</style>
+
+<main>
+
+<header>
+  <div class="eyebrow">Research problem</div>
+  <h1>Does a VAE latent space keep the loop of periodic data?</h1>
+  <p class="subtitle">Reproducing and testing VAE latent spaces with prescribed topology, measured with persistent homology</p>
+  <p class="byline">Jules Géraud Odjé · Geometry and Topology in Machine Learning, University of Fribourg · Fall 2026 · Project 4, research direction 1</p>
+</header>
+
+<section>
+  <h2>The problem</h2>
+  <p>Many quantities go round in a circle: the hour of the day, an angle, a season. After 23:00 comes 00:00, and 359° sits next to 0°. Data driven by such a quantity lie on a <em>loop</em>.</p>
+  <p>A variational autoencoder (VAE) summarises high-dimensional data with a few hidden numbers, the <em>latent space</em>. In the standard VAE this space is flat: a line, a plane. A flat space cannot hold a loop without cutting it somewhere, the way a world map cuts the Pacific in two. Two points that are neighbours in reality, 23:00 and 00:00, end up far apart in the model.</p>
+</section>
+
+<section>
+  <h2>Research question</h2>
+  <div class="question">When the data lie on a cylinder, does a VAE whose latent space is itself a cylinder recover the loop that a standard Gaussian VAE tears, and can persistent homology measure the difference?</div>
+</section>
+
+<section>
+  <h2>The variational autoencoder</h2>
+  <p><b>In general.</b> An encoder compresses each observation <span class="math">x</span> into a small code <span class="math">z</span>, and a decoder rebuilds <span class="math">x</span> from <span class="math">z</span>. In a VAE the code is a small cloud rather than a point, and all clouds must fit a fixed shape, the <em>prior</em>. Training balances the two goals:</p>
+  <div class="formula">loss = reconstruction error + β · KL( code cloud ‖ prior )
+    <span class="note">rebuild each observation well · keep all codes arranged like the prior · β sets the trade-off</span>
+  </div>
+  <p><b>The setting of this project.</b> We use the synthetic data of the paper. Each point has an angle <span class="math">θ</span> (a circle) and a height <span class="math">h</span> between 0 and 1 (an interval), so the data lie on a cylinder <span class="math">S¹ × [0, 1]</span>. The cylinder is pushed through a fixed random map into 50 dimensions, with noise. The model only sees the 50 numbers and must recover the cylinder hidden inside.</p>
+  <div class="formula">x = g(cos θ, sin θ, h) + noise,  &nbsp;x ∈ ℝ⁵⁰
+    <span class="note">example: θ = 90°, h = 0.3 → the point (0, 1, 0.3) on the cylinder, then mapped to 50 numbers</span>
+  </div>
+</section>
+
+<section>
+  <h2>The method</h2>
+
+  <h3>Step 1 · The standard VAE: a flat prior</h3>
+  <p>The standard VAE (Kingma and Welling, 2014) uses a Gaussian prior on <span class="math">ℝ²</span>: a hill whose summit is at the centre. A plane could hold a ring, but the ring needs an empty centre while the hill wants the codes at the centre. The two demands conflict, and the model compromises by opening the ring into a spiral.</p>
+  <p><b>Why it is not enough.</b> In the spiral, two codes on either side of the cut are close in the latent space but far apart on the true circle, or the reverse. The loop of the data is lost.</p>
+
+  <figure>
+    <div class="fig-row">
+      <div class="fig-panel">
+        <svg id="fig-spiral" viewBox="0 0 220 220" role="img" aria-label="Gaussian VAE latent codes open into a spiral"></svg>
+        <div class="fig-label">Gaussian VAE <span>latent ℝ² · loop torn open</span></div>
+      </div>
+      <div class="fig-panel">
+        <svg id="fig-ring" viewBox="0 0 220 220" role="img" aria-label="Cylinder VAE latent codes form a closed ring"></svg>
+        <div class="fig-label">Cylinder VAE <span>latent S¹ × [0, 1] · loop kept</span></div>
+      </div>
+    </div>
+    <figcaption>Schematic of the latent codes, coloured by the true angle θ. <b>Left:</b> the colours make one turn but the two ends do not meet. <b>Right:</b> the colours close the circle. The experiment's own scatter plot is in <span class="mono">results/cylinder/fig_latent.png</span>.</figcaption>
+  </figure>
+
+  <h3>Step 2 · Prescribed topology: give the latent space the shape of the data</h3>
+  <p>Van Hulst, Tomczak, Heemels and Antunes (2026) build the latent space from elementary pieces: a circle for what goes round, an interval for what goes from one end to the other. The pieces are combined to match the data; here a circle times an interval gives a cylinder. The code cloud and the prior both live on the cylinder, and the KL term keeps a closed form.</p>
+  <p>The prior no longer has a centre to fill. The data form a loop and the prior is a loop, so the conflict of Step 1 disappears and nothing needs to be torn.</p>
+
+  <h3>Step 3 · Measuring the loop: persistent homology</h3>
+  <p>A figure shows the spiral, but a scientific comparison needs a number. Persistent homology provides one. A ball is grown around every code. When two balls touch, the two codes are joined. Loops appear, then fill in. A loop that survives over a long range of radii is real structure; one that appears and vanishes at once is noise.</p>
+  <p><b>Worked example.</b> Six points on a regular hexagon of radius 1. Neighbours are 1 apart, every second point 1.73 apart.</p>
+
+  <figure>
+    <div class="fig-row">
+      <div class="fig-panel">
+        <svg id="fig-hex" viewBox="0 0 220 220" role="img" aria-label="Hexagon: a loop appears at scale 1 and fills at scale 1.73"></svg>
+        <div class="fig-label">Growing the scale <span>loop born at 1, filled at 1.73</span></div>
+      </div>
+      <div class="fig-panel">
+        <svg id="fig-dgm" viewBox="0 0 220 220" role="img" aria-label="Persistence diagram: one point far from the diagonal"></svg>
+        <div class="fig-label">Persistence diagram <span>one point per loop: (birth, death)</span></div>
+      </div>
+    </div>
+    <figcaption>At scale 1 the neighbours join and <b>one loop appears</b>. At scale 1.73 every second point joins too, triangles fill the hexagon and <b>the loop dies</b>. Its persistence is 1.73 − 1 = <b>0.73</b>. On the diagram, a real loop sits far from the diagonal; noise sits on it.</figcaption>
+  </figure>
+
+  <p>The gap between two shapes is then measured on their diagrams:</p>
+  <div class="formula">persistence = death − birth  ·  d<sub>B</sub>(D<sub>1</sub>, D<sub>2</sub>) = cost of the best matching between the points of two diagrams
+    <span class="note">d<sub>B</sub> = 0 when the two point clouds have the same loops, of the same size</span>
+  </div>
+  <p>We compute the diagram of the latent codes of each model and compare it with the diagram of the true cylinder. All clouds are rescaled to a mean pairwise distance of 1, so a code space in 2 dimensions and data in 50 dimensions can be compared.</p>
+</section>
+
+<section>
+  <h2>First results</h2>
+  <p>Paper settings, 2,000 points, 8,000 epochs, mean over 3 seeds. Lower is better for errors and distances.</p>
+  <div class="bars" aria-label="Longest loop in each latent space">
+    <div class="bar-row"><span>True cylinder</span><div class="bar-track"><div class="bar-fill ref" style="width:88.3%"></div></div><span class="val">1.13</span></div>
+    <div class="bar-row"><span>Cylinder VAE</span><div class="bar-track"><div class="bar-fill" style="width:87.5%"></div></div><span class="val">1.12</span></div>
+    <div class="bar-row"><span>Gaussian VAE</span><div class="bar-track"><div class="bar-fill bad" style="width:23.4%"></div></div><span class="val">0.30</span></div>
+  </div>
+  <p class="byline">Persistence of the longest loop (H<sub>1</sub>) in each point cloud.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Model</th><th>Reconstruction</th><th>Geodesic stress</th><th>Longest loop</th><th>d<sub>B</sub> to truth</th></tr></thead>
+      <tbody>
+        <tr class="ref"><td>True cylinder</td><td>–</td><td>–</td><td>1.13</td><td>0</td></tr>
+        <tr><td>Gaussian VAE (ℝ²)</td><td>0.194</td><td>0.323</td><td>0.30</td><td>0.566</td></tr>
+        <tr><td>Cylinder VAE (S¹ × [0, 1])</td><td class="good">0.185</td><td class="good">0.161</td><td class="good">1.12</td><td class="good">0.057</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The cylinder VAE reconstructs slightly better, as the paper claims, and its latent codes carry a loop of the same size as the true cylinder. The Gaussian VAE's longest loop is four times shorter: the loop is torn.</p>
+</section>
+
+<section>
+  <h2>What is used, and what is not</h2>
+  <div class="two-col">
+    <div class="used">
+      <div class="head">Used: reproduce and measure</div>
+      <p>The authors' code, data generator, models and settings, pinned to a fixed version, for the cylinder experiment. Persistent homology and the bottleneck distance added as a topological check.</p>
+    </div>
+    <div class="notused">
+      <div class="head">Not used</div>
+      <p>The paper's other experiments and the anchor loss, which fixes the orientation of the latent coordinates but not their topology.</p>
+    </div>
+  </div>
+  <p>The paper judges its latent spaces with reconstruction error and geodesic stress. Neither says directly whether the loop survived. Persistent homology does, which is why it is the added piece of this project.</p>
+</section>
+
+<section>
+  <h2>My work</h2>
+  <ol>
+    <li>Reproduce the cylinder experiment of the paper with the authors' code: Gaussian VAE against cylinder VAE.</li>
+    <li>Add a topological evaluation of the latent spaces: persistence diagrams of the codes and bottleneck distance to the true cylinder.</li>
+    <li>Repeat over several seeds and values of β, to test the paper's claim that the prescribed topology helps across the useful range of β.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Limitations</h2>
+  <ul>
+    <li>The cylinder VAE has a circle in its latent space by construction. Persistent homology therefore tests whether the codes cover the whole circle cleanly, not whether a circle exists.</li>
+    <li>One synthetic dataset with a known shape. Real data rarely announce their topology in advance.</li>
+    <li>The paper is a 2026 preprint that has not yet been peer reviewed.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Next steps</h2>
+  <ul>
+    <li>Vary β and the seeds, and plot reconstruction and loop size against β.</li>
+    <li>Explain one seed of the cylinder VAE whose geodesic stress is high while its loop is intact: the two measures disagree.</li>
+    <li>If time allows, a less synthetic case: rotated MNIST digits, where the rotation angle is the circle.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>References</h2>
+  <div class="refs">
+    <p>Kingma, D. P., and Welling, M. (2014). Auto-Encoding Variational Bayes. ICLR.</p>
+    <p>Van Hulst, J. S., Tomczak, J. M., Heemels, W. P. M. H., and Antunes, D. J. (2026). Constructing VAE Latent Spaces with Prescribed Topology. <a href="https://arxiv.org/abs/2606.07058">arXiv:2606.07058</a>. Code: <a href="https://github.com/JvHulst/VAE-Topology">github.com/JvHulst/VAE-Topology</a>.</p>
+    <p>Edelsbrunner, H., Letscher, D., and Zomorodian, A. (2002). Topological Persistence and Simplification. Discrete &amp; Computational Geometry.</p>
+    <p>Bauer, U. (2021). Ripser: efficient computation of Vietoris–Rips persistence barcodes. Journal of Applied and Computational Topology.</p>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(name, attrs, parent) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function hue(t) { return "hsl(" + Math.round(360 * t) + " 62% 52%)"; }
+
+  // Figure 1, left: codes opened into a spiral (ends do not meet).
+  var sp = document.getElementById("fig-spiral");
+  var n = 60, i, t, r, a;
+  for (i = 0; i < n; i++) {
+    t = i / (n - 1);
+    a = 2 * Math.PI * t * 0.95;
+    r = 28 + 62 * t;
+    el("circle", { cx: 110 + r * Math.cos(a), cy: 110 + r * Math.sin(a), r: 4, fill: hue(t) }, sp);
+  }
+  var a0 = 0, a1 = 2 * Math.PI * 0.95;
+  el("path", { d: "M" + (110 + 28 * Math.cos(a0)) + " " + (110 + 28 * Math.sin(a0)) +
+               " L" + (110 + 90 * Math.cos(a1)) + " " + (110 + 90 * Math.sin(a1)), "class": "gap-mark" }, sp);
+  var tx = el("text", { x: 214, y: 200, "class": "gap-text", "text-anchor": "end" }, sp);
+  tx.textContent = "the two ends";
+  var tx2 = el("text", { x: 214, y: 214, "class": "gap-text", "text-anchor": "end" }, sp);
+  tx2.textContent = "never meet";
+
+  // Figure 1, right: closed ring.
+  var rg = document.getElementById("fig-ring");
+  for (i = 0; i < n; i++) {
+    t = i / n;
+    a = 2 * Math.PI * t;
+    r = 72 + 6 * Math.sin(7 * a);
+    el("circle", { cx: 110 + r * Math.cos(a), cy: 110 + r * Math.sin(a), r: 4, fill: hue(t) }, rg);
+  }
+
+  // Figure 2, left: hexagon with edges and a filled inner triangle.
+  var hx = document.getElementById("fig-hex");
+  var P = [];
+  for (i = 0; i < 6; i++) { a = Math.PI / 2 + i * Math.PI / 3; P.push([110 + 70 * Math.cos(a), 104 - 70 * Math.sin(a)]); }
+  el("polygon", { points: [P[0], P[2], P[4]].map(function (p) { return p.join(","); }).join(" "), "class": "fillzone" }, hx);
+  el("polygon", { points: [P[1], P[3], P[5]].map(function (p) { return p.join(","); }).join(" "), "class": "fillzone" }, hx);
+  el("polygon", { points: P.map(function (p) { return p.join(","); }).join(" "), "class": "edge" }, hx);
+  P.forEach(function (p) { el("circle", { cx: p[0], cy: p[1], r: 4.5, "class": "dot" }, hx); });
+  var l1 = el("text", { x: 110, y: 200, "text-anchor": "middle" }, hx); l1.textContent = "outline: neighbours joined at scale 1";
+  var l2 = el("text", { x: 110, y: 214, "text-anchor": "middle" }, hx); l2.textContent = "shading: triangles filled at 1.73";
+
+  // Figure 2, right: persistence diagram, axes 0 to 2.
+  var dg = document.getElementById("fig-dgm");
+  var x0 = 34, y0 = 186, s = 80; // 1 unit = 80 px
+  function X(v) { return x0 + v * s; } function Y(v) { return y0 - v * s; }
+  [0, 0.5, 1, 1.5, 2].forEach(function (v) {
+    el("line", { x1: X(v), y1: Y(0), x2: X(v), y2: Y(2), "class": "grid" }, dg);
+    el("line", { x1: X(0), y1: Y(v), x2: X(2), y2: Y(v), "class": "grid" }, dg);
+    if (v % 1 === 0) {
+      var tx1 = el("text", { x: X(v), y: Y(0) + 14, "text-anchor": "middle" }, dg); tx1.textContent = v;
+      var ty1 = el("text", { x: X(0) - 8, y: Y(v) + 4, "text-anchor": "end" }, dg); ty1.textContent = v;
+    }
+  });
+  el("line", { x1: X(0), y1: Y(0), x2: X(2), y2: Y(2), "class": "axis", "stroke-dasharray": "4 3" }, dg);
+  [[0.30, 0.36], [0.45, 0.52], [0.62, 0.66], [0.80, 0.88]].forEach(function (p) {
+    el("circle", { cx: X(p[0]), cy: Y(p[1]), r: 3.5, "class": "dot" }, dg);
+  });
+  el("line", { x1: X(1), y1: Y(1), x2: X(1), y2: Y(1.73), "class": "edge", "stroke-dasharray": "3 3" }, dg);
+  el("circle", { cx: X(1), cy: Y(1.73), r: 5.5, "class": "dot-accent" }, dg);
+  var lp = el("text", { x: X(1) + 10, y: Y(1.73) + 4 }, dg); lp.textContent = "(1, 1.73)";
+  var lq = el("text", { x: X(1) - 8, y: Y(1.36) + 4, "text-anchor": "end" }, dg); lq.textContent = "0.73";
+  var lb = el("text", { x: X(1), y: 214, "text-anchor": "middle" }, dg); lb.textContent = "birth";
+  var ld = el("text", { x: 10, y: Y(1), "text-anchor": "middle", transform: "rotate(-90 10 " + Y(1) + ")" }, dg); ld.textContent = "death";
+})();
+</script>
