@@ -53,7 +53,7 @@ scripts/
     run_cylinder.py       main experiment (paper settings)
     run_beta_sweep.py     both models at the same beta, for 5 betas x 3 seeds
     run_all.py            re-runs everything
-docs/                     research problem write-up (English and French)
+docs/                     research problem write-up
 results/                  metrics and figures
 ```
 
@@ -77,7 +77,7 @@ Seeds vary model initialisation only; data and split are fixed (as in the paper)
 
 What we observe:
 
-1. **Reproduced:** at a comparable KL, the cylinder VAE reconstructs slightly better and halves the geodesic stress on average, as the paper claims.
+1. **Reproduced:** with the paper's settings, the cylinder VAE reconstructs slightly better (0.185 vs 0.194) and halves the geodesic stress on average, as the paper claims. Its KL is also slightly larger (3.22 vs 3.14); the beta sweep below shows that the reconstruction gap disappears at an equal KL.
 2. **Topology:** the cylinder VAE's latent codes carry one long H₁ bar of the same length as the true cylinder (bottleneck 0.06). The Gaussian VAE's longest bar is about four times shorter: the latent scatter shows the circle torn into a spiral, so the loop never closes.
 3. **The Gaussian bottleneck is exactly 0.566 for every seed.** This is half the true bar's length: the true loop is matched to the diagonal, i.e. the Gaussian latent has no loop worth matching. It is a ceiling, not a coincidence.
 4. **One cylinder seed (seed 2) has a high geodesic stress (0.305) while its H₁ is still correct.** Persistent homology and geodesic stress measure different things: the loop exists, but distances along it are distorted. To investigate next.
@@ -100,7 +100,7 @@ Both models trained with the **same** β ∈ {0.25, 0.5, 1, 2, 4}, 3 seeds each,
 What we observe:
 
 1. **Topology: the claim holds over the whole range.** The cylinder VAE keeps the loop at every β (median bottleneck below 0.1). The Gaussian VAE loses it completely up to β = 2 (the 0.566 ceiling) and recovers a partial loop only at β = 4.
-2. **Reconstruction: no advantage at the same β.** At equal β, the Gaussian VAE reconstructs slightly *better* up to β = 2. The paper's small reconstruction gain comes from comparing at a matched KL (β = 1.2 Gaussian vs 1.0 cylinder); at a matched KL the two models reconstruct about equally well. The benefit of the prescribed topology is in geometry and topology, not in reconstruction.
+2. **Reconstruction: no advantage at an equal KL.** At equal β, the Gaussian VAE reconstructs slightly *better* up to β = 2, but the same β buys a different KL in each model, so equal β is not a fair comparison. Plotting reconstruction against KL (`results/beta_sweep/fig_rate_distortion.png`) puts both models on the same curve: interpolated at the same KL, their reconstruction errors differ by at most 0.009. The benefit of the prescribed topology is in geometry and topology, not in reconstruction.
 3. **Seed 2 is an outlier at every β.** Its geodesic stress stays high (0.32 to 0.40) while the two other seeds sit at 0.08 to 0.15, and at β ≥ 2 it also loses the loop (bottleneck 0.38 and 0.57). The instability depends on the initialisation more than on β. A mean ± std over 3 seeds would hide this, which is why the figure shows every run.
 
 ## Caveats
@@ -109,3 +109,8 @@ What we observe:
 - The authors' training loop keeps the checkpoint with the best reconstruction **on the test set**, and the same test set is then used for evaluation. The selection effect is probably small, but a separate validation split would be cleaner.
 - Three seeds is few: seed 2 shows that one bad initialisation can change the picture.
 - `n_loops` depends on the 0.2 threshold; in 50 dimensions, noise alone produces a second bar around 0.2. The raw bar lengths are reported so the threshold can be checked.
+- In the authors' code, the KL of the height (Kumaraswamy to uniform) is exact, but the KL of the angle (wrapped normal to uniform) is approximated by `max(0, log 2π − H(Gaussian))`. We checked it numerically: the approximation is exact to four decimals for σ ≤ 0.5 and only fails for σ ≥ 1. Trained models use σ ≤ 0.24, so the reported KL values are not affected.
+
+## License
+
+Our code is released under the MIT License (see `LICENSE`). The authors' `topovae` library is installed as a dependency, not copied, and keeps its own license.

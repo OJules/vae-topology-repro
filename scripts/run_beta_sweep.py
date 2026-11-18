@@ -9,7 +9,8 @@ seed, and evaluated with the paper's metrics and our persistent-homology metrics
 Outputs in results/beta_sweep[_quick]/:
     metrics.csv         one row per (model, beta, seed)
     summary.csv         mean and std over seeds, per (model, beta)
-    fig_beta_sweep.png  the four metrics against beta
+    fig_beta_sweep.png        the four metrics against beta
+    fig_rate_distortion.png   reconstruction error against KL (comparison at equal KL)
 """
 
 import argparse
@@ -72,6 +73,7 @@ def main():
     summary = df.groupby(["model", "beta"], sort=False)[cols].agg(["mean", "std"])
     summary.to_csv(os.path.join(out, "summary.csv"))
     plots.beta_sweep(df, ref_bar, os.path.join(out, "fig_beta_sweep.png"))
+    plots.rate_distortion(df, os.path.join(out, "fig_rate_distortion.png"))
 
     with pd.option_context("display.width", 250, "display.max_columns", None,
                            "display.precision", 3):

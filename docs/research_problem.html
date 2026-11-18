@@ -190,7 +190,7 @@ td.good { color: var(--accent); font-weight: 600; }
   </figure>
 
   <h3>Step 2 · Prescribed topology: give the latent space the shape of the data</h3>
-  <p>Van Hulst, Tomczak, Heemels and Antunes (2026) build the latent space from elementary pieces: a circle for what goes round, an interval for what goes from one end to the other. The pieces are combined to match the data; here a circle times an interval gives a cylinder. The code cloud and the prior both live on the cylinder, and the KL term keeps a closed form.</p>
+  <p>Van Hulst, Tomczak, Heemels and Antunes (2026) build the latent space from elementary pieces: a circle for what goes round, an interval for what goes from one end to the other. The pieces are combined to match the data; here a circle times an interval gives a cylinder. The prior is uniform around the circle and uniform along the height. Each code cloud is a wrapped normal for the angle and a Kumaraswamy distribution for the height, so it also lives on the cylinder. In the authors' code, the KL term is exact for the height and approximated for the angle; the approximation is exact to four decimals for the cloud widths the trained models use.</p>
   <p>The prior no longer has a centre to fill. The data form a loop and the prior is a loop, so the conflict of Step 1 disappears and nothing needs to be torn.</p>
 
   <h3>Step 3 · Measuring the loop: persistent homology</h3>
@@ -237,7 +237,7 @@ td.good { color: var(--accent); font-weight: 600; }
       </tbody>
     </table>
   </div>
-  <p>The cylinder VAE reconstructs slightly better, as the paper claims, and its latent codes carry a loop of the same size as the true cylinder. The Gaussian VAE's longest loop is four times shorter: the loop is torn.</p>
+  <p>The cylinder VAE reconstructs slightly better, as the paper claims, but it also uses a slightly larger KL; a β sweep shows that at an equal KL the two models reconstruct equally well. The real difference is the loop: the cylinder VAE's latent codes carry a loop of the same size as the true cylinder, while the Gaussian VAE's longest loop is four times shorter. The loop is torn.</p>
 </section>
 
 <section>

@@ -41,6 +41,43 @@ def diagrams(dgms, path):
     fig.tight_layout(); fig.savefig(path, dpi=150); plt.close(fig)
 
 
+def rate_distortion(df, path):
+    """Reconstruction error against KL, one point per beta (median over seeds).
+
+    Comparing models at the same beta mixes two effects, because the same beta
+    buys a different KL in each model. Plotting reconstruction against KL
+    compares them at the same 'budget': if the two curves overlap, the models
+    reconstruct equally well at equal KL.
+    """
+    fig, ax = plt.subplots(figsize=(6.4, 4.6))
+    for model, color in COLORS.items():
+        sub = df[df["model"] == model]
+        ax.scatter(sub["kl_divergence"], sub["test_rms"], s=22, color=color, alpha=0.35,
+                   linewidths=0, zorder=2)
+        med = sub.groupby("beta")[["kl_divergence", "test_rms"]].median().sort_values("kl_divergence")
+        ax.plot(med["kl_divergence"], med["test_rms"], color=color, linewidth=2, marker="o",
+                markersize=7, markeredgecolor="white", markeredgewidth=1.5, label=model, zorder=3)
+        if model == "Cylinder VAE":
+            for b, r in med.iterrows():
+                ax.annotate(f"β={b:g}", (r["kl_divergence"], r["test_rms"]), textcoords="offset points",
+                            xytext=(-8, -13), ha="right", fontsize=8.5, color=MUTED)
+    ax.set_xlabel("KL divergence to the prior (nats)", fontsize=9.5, color=MUTED)
+    ax.set_ylabel("Reconstruction error (test RMS)", fontsize=9.5, color=MUTED)
+    ax.set_title("At the same KL, both models reconstruct equally well", fontsize=11,
+                 color=INK, loc="left")
+    ax.grid(True, color=GRID, linewidth=0.8); ax.set_axisbelow(True)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color(GRID)
+    ax.tick_params(colors=MUTED, labelsize=9)
+    ax.legend(frameon=False, fontsize=9.5, loc="upper right")
+    fig.text(0.01, 0.01, "One point per β (median over 3 seeds); small dots = single seeds. "
+             "Lower-left is better.", fontsize=8, color=MUTED)
+    fig.tight_layout(rect=(0, 0.03, 1, 1))
+    fig.savefig(path, dpi=150); plt.close(fig)
+
+
 def beta_sweep(df, ref_bar, path):
     """Four metrics against beta: one dot per seed, line = median over seeds.
 
