@@ -24,10 +24,11 @@ uv sync                                          # creates .venv, installs pinne
 uv run python scripts/run_cylinder.py --quick    # smoke test, about 1 minute
 uv run python scripts/run_cylinder.py            # main experiment, about 10 minutes
 uv run python scripts/run_beta_sweep.py          # beta sweep, about 30 minutes
-uv run python scripts/run_all.py                 # everything
+uv run python scripts/diagnose_seed.py           # seed 0 vs seed 2 diagnosis, about 3 minutes
+uv run python scripts/run_all.py                 # main experiment + beta sweep
 ```
 
-Results are written to `results/cylinder/` and `results/beta_sweep/` (`*_quick/` for the smoke tests). Times are for a laptop CPU; no GPU is needed.
+Results are written to `results/cylinder/`, `results/beta_sweep/` and `results/diagnosis/` (`*_quick/` for the smoke tests). Times are for a laptop CPU; no GPU is needed.
 
 ## What is ours and what is the authors'
 
@@ -52,7 +53,8 @@ src/vaetopo/
 scripts/
     run_cylinder.py       main experiment (paper settings)
     run_beta_sweep.py     both models at the same beta, for 5 betas x 3 seeds
-    run_all.py            re-runs everything
+    diagnose_seed.py      where each seed's codes sit on the loop (explains seed 2)
+    run_all.py            re-runs the main experiment and the beta sweep
 docs/                     research problem write-up
 results/                  metrics and figures
 ```
@@ -80,7 +82,7 @@ What we observe:
 1. **Reproduced:** with the paper's settings, the cylinder VAE reconstructs slightly better (0.185 vs 0.194) and halves the geodesic stress on average, as the paper claims. Its KL is also slightly larger (3.22 vs 3.14); the beta sweep below shows that the reconstruction gap disappears at an equal KL.
 2. **Topology:** the cylinder VAE's latent codes carry one long H₁ bar of the same length as the true cylinder (bottleneck 0.06). The Gaussian VAE's longest bar is about four times shorter: the latent scatter shows the circle torn into a spiral, so the loop never closes.
 3. **The Gaussian bottleneck is exactly 0.566 for every seed.** This is half the true bar's length: the true loop is matched to the diagonal, i.e. the Gaussian latent has no loop worth matching. It is a ceiling, not a coincidence.
-4. **One cylinder seed (seed 2) has a high geodesic stress (0.305) while its H₁ is still correct.** Persistent homology and geodesic stress measure different things: the loop exists, but distances along it are distorted. To investigate next.
+4. **One cylinder seed (seed 2) has a high geodesic stress (0.305) while its H₁ is still correct.** Persistent homology and geodesic stress measure different things: the loop exists, but distances along it are distorted. See the seed diagnosis below.
 5. **`n_loops` does not separate the models** (1 for both): the 0.2 threshold is too low, since the Gaussian's torn ring still produces a 0.3 bar. The bar length and bottleneck distance are the informative metrics.
 
 Figures: `results/cylinder/fig_latent.png`, `results/cylinder/fig_h1_diagrams.png` (seed 0).
@@ -102,6 +104,20 @@ What we observe:
 1. **Topology: the claim holds over the whole range.** The cylinder VAE keeps the loop at every β (median bottleneck below 0.1). The Gaussian VAE loses it completely up to β = 2 (the 0.566 ceiling) and recovers a partial loop only at β = 4.
 2. **Reconstruction: no advantage at an equal KL.** At equal β, the Gaussian VAE reconstructs slightly *better* up to β = 2, but the same β buys a different KL in each model, so equal β is not a fair comparison. Plotting reconstruction against KL (`results/beta_sweep/fig_rate_distortion.png`) puts both models on the same curve: interpolated at the same KL, their reconstruction errors differ by at most 0.009. The benefit of the prescribed topology is in geometry and topology, not in reconstruction.
 3. **Seed 2 is an outlier at every β.** Its geodesic stress stays high (0.32 to 0.40) while the two other seeds sit at 0.08 to 0.15, and at β ≥ 2 it also loses the loop (bottleneck 0.38 and 0.57). The instability depends on the initialisation more than on β. A mean ± std over 3 seeds would hide this, which is why the figure shows every run.
+
+## Seed diagnosis: right topology, wrong geometry
+
+`scripts/diagnose_seed.py` retrains the cylinder VAE with the paper's settings for seeds 0 and 2 and compares the latent codes with the true angle and height of the 400 test points. Output: `results/diagnosis/seed_diagnosis.csv`.
+
+| | Seed 0 | Seed 2 |
+|---|---|---|
+| Turns of the latent angle (±1 = one clean turn) | −1 | +1 |
+| Points more than 30° off the true angle | 0 % | 26 % |
+| Correlation, true and latent height | +0.97 | −0.67 |
+| Geodesic stress | 0.084 | 0.305 |
+| Longest H₁ bar (true cylinder 1.13) | 1.14 | 1.08 |
+
+Both seeds wrap the circle exactly once (the sign is only the direction), so persistent homology is satisfied. Seed 2 places a quarter of the points more than 30° off and partly reverses the height, which is why its geodesic stress is almost four times higher. It is a bad local optimum set by the initialisation: the same seed is the outlier at every β in the sweep.
 
 ## Caveats
 
