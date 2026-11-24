@@ -25,10 +25,11 @@ uv run python scripts/run_cylinder.py --quick    # smoke test, about 1 minute
 uv run python scripts/run_cylinder.py            # main experiment, about 10 minutes
 uv run python scripts/run_beta_sweep.py          # beta sweep, about 30 minutes
 uv run python scripts/diagnose_seed.py           # seed 0 vs seed 2 diagnosis, about 3 minutes
+uv run python scripts/make_slide_figures.py      # large figures for the presentation, about 5 minutes
 uv run python scripts/run_all.py                 # main experiment + beta sweep
 ```
 
-Results are written to `results/cylinder/`, `results/beta_sweep/` and `results/diagnosis/` (`*_quick/` for the smoke tests). Times are for a laptop CPU; no GPU is needed.
+Results are written to `results/cylinder/`, `results/beta_sweep/`, `results/diagnosis/` and `results/slides/` (`*_quick/` for the smoke tests). Times are for a laptop CPU; no GPU is needed.
 
 ## What is ours and what is the authors'
 
@@ -50,10 +51,12 @@ src/vaetopo/
     train.py              trains Gaussian / cylinder VAE, extracts latent point clouds
     topology.py           Vietoris-Rips H1 diagrams (ripser), bottleneck distance (persim)
     plots.py              latent scatter and persistence-diagram figures
+    slide_figures.py      large, minimal figures for the slides
 scripts/
     run_cylinder.py       main experiment (paper settings)
     run_beta_sweep.py     both models at the same beta, for 5 betas x 3 seeds
     diagnose_seed.py      where each seed's codes sit on the loop (explains seed 2)
+    make_slide_figures.py figures of the presentation: torn vs kept circle, beta, seed 0 vs 2
     run_all.py            re-runs the main experiment and the beta sweep
 docs/                     research problem write-up
 results/                  metrics and figures
