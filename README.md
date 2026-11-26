@@ -2,12 +2,14 @@
 
 Final project for *Geometry and Topology in Machine Learning* (University of Fribourg, fall 2026), Project 4, research direction 1.
 
-We reproduce the **periodic-data (cylinder) experiment** of
+We reproduce the **cylinder experiment** of
 
 > J. S. van Hulst, J. M. Tomczak, W. P. M. H. Heemels, D. J. Antunes.
 > *Constructing VAE Latent Spaces with Prescribed Topology.* arXiv:2606.07058 (2026).
 
 and evaluate the learned latent spaces with **persistent homology**, a tool the paper itself does not use.
+
+**Why the cylinder.** The project asks for "the periodic-data experiment", but the paper has no experiment with that name. Its synthetic validation (Section IV-B) tests a cylinder S¹ × [0, 1], a torus S¹ × S¹ and a Möbius strip; Sections IV-C and IV-D use rotated and shifted MNIST. We chose the cylinder, which the authors call "the simplest mixed-product example": one periodic coordinate (the angle) and one that is not (the height).
 
 ## Question
 
@@ -80,9 +82,19 @@ Seeds vary model initialisation only; data and split are fixed (as in the paper)
 | Gaussian VAE (R²) | 0.194 ± 0.002 | 3.14 ± 0.04 | 0.323 ± 0.004 | 0.30 ± 0.04 | 0.566 ± 0.000 |
 | Cylinder VAE (S¹ × [0,1]) | **0.185 ± 0.006** | 3.22 ± 0.04 | **0.161 ± 0.125** | **1.12 ± 0.03** | **0.057 ± 0.009** |
 
+### Comparison with the paper (Table II, cylinder)
+
+| | Paper, Gaussian | Paper, cylinder | Ours, Gaussian | Ours, cylinder |
+|---|---|---|---|---|
+| Geodesic stress | 0.296 | 0.082 | 0.323 | 0.084 (seed 0) · 0.161 (mean of 3) |
+| Test RMS | 0.150 | 0.148 | 0.194 | 0.185 |
+| KL (unweighted) | 4.36 | 4.37 | 3.14 | 3.22 |
+
+**A partial reproduction.** The geodesic stress is reproduced: the cylinder VAE divides it by about four, and seed 0 matches the paper's value (0.084 vs 0.082). The reconstruction error and the KL are not: our models run at a lower KL (about 3.2 instead of 4.4) and reconstruct less well. We used the hyperparameters of the authors' experiment script (β = 1.2 / 1.0, 8000 epochs), which probably differ from the settings behind Table II. The paper's consistency RMS is not reproduced here.
+
 What we observe:
 
-1. **Reproduced:** with the paper's settings, the cylinder VAE reconstructs slightly better (0.185 vs 0.194) and halves the geodesic stress on average, as the paper claims. Its KL is also slightly larger (3.22 vs 3.14); the beta sweep below shows that the reconstruction gap disappears at an equal KL.
+1. **Geometry reproduced:** the cylinder VAE halves the geodesic stress on average (a factor four for seeds 0 and 1), as in the paper. Its reconstruction is slightly better (0.185 vs 0.194), but its KL is also slightly larger (3.22 vs 3.14); the beta sweep below shows that the reconstruction gap disappears at an equal KL.
 2. **Topology:** the cylinder VAE's latent codes carry one long H₁ bar of the same length as the true cylinder (bottleneck 0.06). The Gaussian VAE's longest bar is about four times shorter: the latent scatter shows the circle torn into a spiral, so the loop never closes.
 3. **The Gaussian bottleneck is exactly 0.566 for every seed.** This is half the true bar's length: the true loop is matched to the diagonal, i.e. the Gaussian latent has no loop worth matching. It is a ceiling, not a coincidence.
 4. **One cylinder seed (seed 2) has a high geodesic stress (0.305) while its H₁ is still correct.** Persistent homology and geodesic stress measure different things: the loop exists, but distances along it are distorted. See the seed diagnosis below.
@@ -105,7 +117,7 @@ Both models trained with the **same** β ∈ {0.25, 0.5, 1, 2, 4}, 3 seeds each,
 What we observe:
 
 1. **Topology: the claim holds over the whole range.** The cylinder VAE keeps the loop at every β (median bottleneck below 0.1). The Gaussian VAE loses it completely up to β = 2 (the 0.566 ceiling) and recovers a partial loop only at β = 4.
-2. **Reconstruction: no advantage at an equal KL.** At equal β, the Gaussian VAE reconstructs slightly *better* up to β = 2, but the same β buys a different KL in each model, so equal β is not a fair comparison. Plotting reconstruction against KL (`results/beta_sweep/fig_rate_distortion.png`) puts both models on the same curve: interpolated at the same KL, their reconstruction errors differ by at most 0.009. The benefit of the prescribed topology is in geometry and topology, not in reconstruction.
+2. **Reconstruction: no advantage at an equal KL, unlike the paper.** At equal β, the Gaussian VAE reconstructs slightly *better* up to β = 2, but the same β buys a different KL in each model, so equal β is not a fair comparison. Plotting reconstruction against KL (`results/beta_sweep/fig_rate_distortion.png`) puts both models on the same curve: interpolated at the same KL, their reconstruction errors differ by at most 0.009. The paper's KL sweep (50 seeds, β from 0.01 to 10) reports instead that "the topology-aware VAE outperforms the Gaussian once β exceeds a small threshold". **We do not reproduce this claim.** Possible reasons: 3 seeds instead of 50, a narrower β range, 4000 epochs per run, and the different operating point seen in the Table II comparison. The benefit we do reproduce is in geometry and topology, not in reconstruction.
 3. **Seed 2 is an outlier at every β.** Its geodesic stress stays high (0.32 to 0.40) while the two other seeds sit at 0.08 to 0.15, and at β ≥ 2 it also loses the loop (bottleneck 0.38 and 0.57). The instability depends on the initialisation more than on β. A mean ± std over 3 seeds would hide this, which is why the figure shows every run.
 
 ## Seed diagnosis: right topology, wrong geometry
@@ -126,7 +138,8 @@ Both seeds wrap the circle exactly once (the sign is only the direction), so per
 
 - For the cylinder VAE, the latent space is a circle by construction, so a loop is guaranteed *if the codes cover the whole circle*. Persistent homology still tests something: a posterior that collapses to an arc would show no long H₁ bar. The fairer comparison is the bottleneck distance, which also measures how large and clean the loop is.
 - The authors' training loop keeps the checkpoint with the best reconstruction **on the test set**, and the same test set is then used for evaluation. The selection effect is probably small, but a separate validation split would be cleaner.
-- Three seeds is few: seed 2 shows that one bad initialisation can change the picture.
+- Three seeds is few (the paper's KL sweep uses 50): seed 2 shows that one bad initialisation can change the picture.
+- Only the cylinder is reproduced; the torus, the Möbius strip and the MNIST experiments of the paper are not.
 - `n_loops` depends on the 0.2 threshold; in 50 dimensions, noise alone produces a second bar around 0.2. The raw bar lengths are reported so the threshold can be checked.
 - In the authors' code, the KL of the height (Kumaraswamy to uniform) is exact, but the KL of the angle (wrapped normal to uniform) is approximated by `max(0, log 2π − H(Gaussian))`. We checked it numerically: the approximation is exact to four decimals for σ ≤ 0.5 and only fails for σ ≥ 1. Trained models use σ ≤ 0.24, so the reported KL values are not affected.
 
